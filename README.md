@@ -1,4 +1,5 @@
-#PROYECTO: Sistema de Riego por goteo Automatizado con Arduino
+#*********************************************************PROYECTO************************************************************************
+Sistema de Riego por goteo Automatizado con Arduino
 
 #*********************************************************RESUMEN DEL PROTOTIPO***********************************************************
 #Sitema que analiza la humedad del suelo por medio de un sensor que se encuentra conectado a un Arduino, si el suelo necesita humedad, se activa un relay que permite el paso de corriente a una bomba, esta bomba permite bombear el agua a un sistema de riego por goteo para poder brindar el agua necesaria a las plantas.
