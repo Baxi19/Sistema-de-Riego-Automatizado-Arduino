@@ -16,6 +16,14 @@ LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
 bool portada = false;
 int relay = 6;
 bool riegoActivado = false;
+int contador = 0;
+
+/*VARIABLES QUE SE PUEDEN REGULAR*/
+int sensorDesconectado = 4;
+int tierraSeca = 10;
+int tierraHumeda = 45;
+int sensorAgua = 65;
+
 /*---------------------------------------------------------------------------------------------------------*/
 //funcion para imprimir en pantalla
 void show(int columna, int fila, String texto ) {
@@ -26,6 +34,7 @@ void show(int columna, int fila, String texto ) {
 /*---------------------------------------------------------------------------------------------------------*/
 //funcion para imprimir portada
 void imprimePortada() {
+  lcd.clear();
   String texto = "Tecnologico de";
   show(0, 0, texto);
   String aux = "Costa Rica";
@@ -75,21 +84,21 @@ void imprimePortada() {
   show(0, 0, texto6);
   String aux6 = "Ruiz C.";
   show(1, 0, aux6);
-  delay(1500);
+  delay(1000);
 
   lcd.clear();
   String texto7 = "Kervin";
   show(0, 0, texto7);
   String aux7 = "Sibaja R.";
   show(1, 0, aux7);
-  delay(1500);
+  delay(1000);
 
   lcd.clear();
   String texto8 = "Daniel";
   show(0, 0, texto8);
   String aux8 = "Vargas G.";
   show(1, 0, aux8);
-  delay(1500);
+  delay(1000);
 
   lcd.clear();
   String texto2 = "Sistema de Riego";
@@ -106,95 +115,89 @@ void imprimePortada() {
 //Funcion para configuraciones
 void setup() {
   Serial.begin(9600);
+  lcd.begin(16, 2);
   pinMode(A0, INPUT);
   pinMode(relay, OUTPUT);
-  lcd.begin(16, 2);
+  
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
 //ciclo de aplicacion
 void loop() {
+
+ 
   //Puerto que se utiliza en el arduino para la entrada de las lecturas del sensor de humedad en este caso
   int humedad = analogRead(A0);
-
-  Serial.print("La humedad es: ");
-  Serial.println(humedad);
   lcd.clear();
-  
-  
+  int lecturaPorcentaje = map(humedad, 1023, 0, 0, 100);
+  String lecturaTexto = (String) lecturaPorcentaje;
+  int tamano = lecturaTexto.length();
+    
   //si es la primera iteracion se imprime la portada
   if (portada == false ) {
+    digitalWrite(relay, LOW);
     imprimePortada();
-
   }
-  //si se encuentra el sensor de temperatura desconectado o fuera de la tierra
-  if (humedad >= 1000) {
-    int lecturaPorcentaje = map(humedad, 1023, 0, 0, 100);
-    Serial.print(lecturaPorcentaje);
-    Serial.println( "%");
-    Serial.println("El sensor se encuentra desconectado o fuera del suelo.....");
+
+  
+  //Si el porcentaje se encuentra fuera del rango
+  if((tamano >= 3)&& (lecturaPorcentaje != 100 )){
+    lcd.clear();
+    String texto = "Verificar";
+    show(0, 0, texto);
+    String aux = "sensor...";
+    show(1, 0, aux);
+    digitalWrite(relay, LOW);
+  
+  //si esta fuera del suelo  se mantine la bomba apagada ( > 4%)
+  }else if ((lecturaPorcentaje >= 0) && (lecturaPorcentaje < sensorDesconectado) ) {
     String texto = "Fuera del Suelo";
     show(0, 0, texto);
     String aux = "Humedad :";
     show(1, 0, aux);
     String lecturaTexto = (String) lecturaPorcentaje;
     show(10, 0, lecturaTexto);
-    digitalWrite(relay, HIGH);
+    digitalWrite(relay, LOW);
     
-  //si el suelo se encuentra seco
-  } else if (humedad < 1000 && humedad >= 600) {
-    int lecturaPorcentaje = map(humedad, 1023, 0, 0, 100);
-    Serial.print(lecturaPorcentaje);
-    Serial.println( "%");
-    Serial.println("El suelo se encuentra seco");
+
+    //si el suelo  esta seco se enciende la bomba ( > 4% y < 20%)
+  } else if ((lecturaPorcentaje > sensorDesconectado) && (lecturaPorcentaje <= tierraSeca ) ) {
     String texto = "Suelo Seco!!";
     show(0, 0, texto);
     String aux = "Humedad :";
     show(1, 0, aux);
     String lecturaTexto = (String) lecturaPorcentaje;
     show(10, 0, lecturaTexto);
-    digitalWrite(relay, LOW);
-    //Activamos el sistema de bombeo de agua si no se encuentra activado aun
-    /*if(riegoActivado = false){
-      digitalWrite(relay, LOW);
-      Serial.println("El Relay activado para inicio de riego");
-      riegoActivado = true;  
-    }*/
+    digitalWrite(relay, HIGH);
     
-  //si el suelo se encuentra suficientemente humedo
-  } else if (humedad < 600 && humedad >= 370) {
-    int lecturaPorcentaje = map(humedad, 1023, 0, 0, 100);
-    Serial.print(lecturaPorcentaje);
-    Serial.println( "%");
-    Serial.println("El suelo esta humedo");
+
+    //si ya se encuentra lo suficientemente humedo se apaga la bomba ( > 30% y < 45%)
+  } else if ((lecturaPorcentaje > tierraSeca) && (lecturaPorcentaje <= tierraHumeda )) {
     String texto = "Suelo Humedo";
     show(0, 0, texto);
     String aux = "Humedad :";
     show(1, 0, aux);
     String lecturaTexto = (String) lecturaPorcentaje;
     show(10, 0, lecturaTexto);
-    digitalWrite(relay, HIGH);
-    //Desactivamos el sistema de bombeo de agua si ya tiene el agua necesaria y aun se encuentra activado
-    /*if(riegoActivado = true){
-      digitalWrite(relay, HIGH);
-      Serial.println("El Relay desactivado para detener el riego");
-      riegoActivado = false;  
-    }*/
+    digitalWrite(relay, LOW);
     
 
-  //si el sensor esta practicamente en agua.
-  } else if (humedad <  370) {
-    int lecturaPorcentaje = map(humedad, 1023, 0, 0, 100);
-    Serial.print(lecturaPorcentaje);
-    Serial.println( "%");
-    Serial.println("El sensor esta practicamente en agua");
+  //si se encuentra dentro del agua( > 65% )
+  } else if ((lecturaPorcentaje >= sensorAgua )) {
     String texto = "Sensor en Agua";
     show(0, 0, texto);
     String aux = "Humedad :";
     show(1, 0, aux);
     String lecturaTexto = (String) lecturaPorcentaje;
     show(10, 0, lecturaTexto);
-    digitalWrite(relay, HIGH);
+    digitalWrite(relay, LOW);
+    
+  }
+
+  contador += 1;
+  if (contador == 180) {
+    portada = false;
+    contador = 0;
   }
   delay(1000);
 
