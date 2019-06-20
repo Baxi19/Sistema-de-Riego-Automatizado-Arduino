@@ -1,4 +1,10 @@
-#*********************************************************PROYECTO************************************************************************
+//Instituto Tecnológico de Costa Rica
+//Campus Tecnológico Local San Carlos
+//Escuela de Ingeniería en computación
+//Profesor: Jorge Alfaro
+//Estudiante: Randald Villegas
+
+#*PROYECTO*
 Sistema de Riego por goteo Automatizado con Arduino
 
 #*********************************************************RESUMEN DEL PROTOTIPO***********************************************************
